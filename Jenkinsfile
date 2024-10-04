@@ -1,39 +1,49 @@
+@Library("sharedlib") _
+
 pipeline {
-    agent { label "dev-server"}
-    
+    agent { label "age" }  // Make sure 'age' is a valid agent label
+
     stages {
-        
-        stage("code"){
-            steps{
-                git url: "https://github.com/LondheShubham153/node-todo-cicd.git", branch: "master"
-                echo 'bhaiyya code clone ho gaya'
-            }
-        }
-        stage("build and test"){
-            steps{
-                sh "docker build -t node-app-test-new ."
-                echo 'code build bhi ho gaya'
-            }
-        }
-        stage("scan image"){
-            steps{
-                echo 'image scanning ho gayi'
-            }
-        }
-        stage("push"){
-            steps{
-                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
-                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                sh "docker tag node-app-test-new:latest ${env.dockerHubUser}/node-app-test-new:latest"
-                sh "docker push ${env.dockerHubUser}/node-app-test-new:latest"
-                echo 'image push ho gaya'
+        stage("Hello") {
+            steps {
+                script {
+                    hello()  // This should be defined in your shared library
                 }
             }
         }
-        stage("deploy"){
-            steps{
-                sh "docker-compose down && docker-compose up -d"
-                echo 'deployment ho gayi'
+
+        stage('Code') {
+            steps {
+                script {
+                    clone("https://github.com/AgeCoder/node-todo-cicd.git", "master")  // Assuming clone() is from your shared lib
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the code'
+                script {
+                    docker_build("notes-app", "latest", "aligthage")  // docker_build() should also be part of the shared library
+                }
+            }
+        }
+
+        stage('Push') {
+            steps {
+                echo 'Pushing the Image to Docker Hub'
+                script {
+                    docker_push("notes-app", "latest", "aligthage")  // Ensure docker_push() handles Docker login and push
+                }
+                echo 'Image pushed successfully'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying the code'
+                sh "docker compose up -d"
+                echo 'Deployment completed successfully'
             }
         }
     }
